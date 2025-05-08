@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>V.A.N.I.A IA</title>
+    
+    <!-- Meta tags para evitar caché -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- CSS con parámetro de versión para evitar caché -->
+    <link rel="stylesheet" href="./css/sidebar.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="./css/style.css?v=<?php echo time(); ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    
+</head>
+<body>
+    <div class="background-animations"></div>
+    
+    <!-- Botón para abrir/cerrar la barra lateral con icono de carpeta -->
+    <button class="sidebar-toggle" id="sidebarToggle">
+        <i class="fas fa-folder-open"></i>
+    </button>
+    
+    <!-- Barra lateral de historial de chats -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3>Historial de Chats</h3>
+            <i class="fas fa-times" id="closeSidebar"></i>
+        </div>
+        <div class="chat-history" id="chatHistory">
+            <!-- Los chats guardados se cargarán aquí dinámicamente -->
+        </div>
+    </div>
+    
+    <!-- Contenido principal -->
+    <div class="content-wrapper" id="contentWrapper">
+        <!-- Imagen + Mini Chat (oculto inicialmente) -->
+        <div class="floating-assistant">
+            <img src="img/candado.png" alt="Asistente IA" class="floating-image" id="floatingImage">
+            <div class="mini-chat" id="miniChat">
+                <div class="mini-chat-messages" id="miniChatMessages"></div>
+            </div>
+        </div>
+        <header>
+            <h1>V.A.N.I.A</h1>
+        </header>
+        <div class="container">
+            <div class="welcome">
+                <h2>Bienvenido</h2>
+                <p>Explora nuestro contenido especializado. Aquí encontrarás información relevante, conceptos clave y recursos útiles.</p>
+            </div>
+            <div class="chat-container">
+                <button id="newChatButton">
+                    <i class="fas fa-plus"></i> Nuevo Chat
+                </button>
+                <div id="chat"></div>
+            </div>
+            <div class="input-section">
+                <input type="text" id="userInput" placeholder="Pregunta algo">
+                <button id="sendButton">Enviar</button>
+                <button id="stopButton" style="display: none;" onclick="stopTyping()">Parar</button>
+                <button id="readButton">Leer</button>
+                <!-- <button id="speedButton" title="Velocidad rápida">⏩</button>  Nuevo botón -->
+                
+                <button id="stopSpeechButton" style="display: none;">Parar</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts con parámetro de versión para evitar caché -->
+    <script src="js/main.js"></script>
+    <script src="js/animations.js?v=<?php echo time(); ?>"></script>
+    <script src="js/floating-image.js?v=<?php echo time(); ?>"></script>
+
+</body>
+</html>

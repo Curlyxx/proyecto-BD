@@ -1,0 +1,142 @@
+let isTyping = false; // Estado para saber si la IA está escribiendo
+let typingInterval; // Intervalo de la animación de escritura
+let isFirstMessage = true; // Bandera para saber si es el primer mensaje
+let lastAiMessage = ""; // Almacena el último mensaje de la IA
+
+// Función para limpiar el chat
+function clearChat() {
+    let chat = document.getElementById("chat");
+    chat.innerHTML = ""; // Elimina todos los mensajes del chat
+    lastAiMessage = ""; // Limpiar el último mensaje almacenado
+}
+
+// Asignar la función clearChat al botón "Nuevo Chat"
+document.getElementById("newChatButton").addEventListener("click", clearChat);
+
+// Función para animar la escritura de un mensaje
+function typeMessage(message, element, callback) {
+    let text = "";
+    let index = 0;
+    typingInterval = setInterval(() => {
+        if (index < message.length) {
+            text += message.charAt(index);
+            element.innerHTML = text; // Usar innerHTML para mantener el formato
+            index++;
+        } else {
+            clearInterval(typingInterval);
+            isTyping = false;
+            if (callback) callback(); // Llamar al callback si está definido
+        }
+    }, 30); // Velocidad de escritura (30ms por letra)
+}
+
+function submitComment() {
+    let input = document.getElementById("userInput");
+    let chat = document.getElementById("chat");
+
+    if (input.value.trim() !== "" && !isTyping) {
+        // Mostrar el cuadro de chat si es el primer mensaje
+        if (isFirstMessage) {
+            chat.classList.add("visible"); // Añade la clase para mostrar el chat
+            isFirstMessage = false; // Cambia la bandera para que no se repita
+        }
+
+        // Mostrar el mensaje del usuario
+        let userMessage = document.createElement("div");
+        userMessage.classList.add("message", "user-message");
+        userMessage.textContent = input.value;
+        chat.appendChild(userMessage);
+
+        // Deshabilitar el input y cambiar el botón a "Parar"
+        input.disabled = true;
+        document.getElementById("sendButton").style.display = "none";
+        document.getElementById("stopButton").style.display = "inline-block";
+        isTyping = true;
+
+        // Hacer una solicitud al backend de Wikipedia
+        fetch(`http://localhost/ia2/Ia/backend/wikipedia.php?termino=${encodeURIComponent(input.value)}`)
+            .then(response => response.text())
+            .then(data => {
+                // Almacenar el último mensaje de la IA
+                lastAiMessage = data;
+
+                // Generar una respuesta de la IA
+                let aiMessage = document.createElement("div");
+                aiMessage.classList.add("message", "ai-message");
+                chat.appendChild(aiMessage);
+
+                // Mostrar la respuesta con animación de escritura
+                typeMessage(data, aiMessage, () => {
+                    input.disabled = false; // Habilitar el input cuando la IA termina de escribir
+                    document.getElementById("sendButton").style.display = "inline-block";
+                    document.getElementById("stopButton").style.display = "none";
+                });
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                // Mostrar un mensaje de error en caso de fallo
+                let aiMessage = document.createElement("div");
+                aiMessage.classList.add("message", "ai-message");
+                chat.appendChild(aiMessage);
+
+                // Mostrar el mensaje de error con animación de escritura
+                typeMessage("Hubo un error al procesar tu solicitud. Inténtalo de nuevo.", aiMessage, () => {
+                    input.disabled = false; // Habilitar el input cuando la IA termina de escribir
+                    document.getElementById("sendButton").style.display = "inline-block";
+                    document.getElementById("stopButton").style.display = "none";
+                });
+            });
+
+        // Limpiar el campo de entrada
+        input.value = "";
+
+        // Desplazar el chat hacia abajo
+        chat.scrollTop = chat.scrollHeight;
+    }
+}
+
+function stopTyping() {
+    if (isTyping) {
+        clearInterval(typingInterval); // Detener la animación de escritura
+        isTyping = false;
+        document.getElementById("userInput").disabled = false; // Habilitar el input
+        document.getElementById("sendButton").style.display = "inline-block";
+        document.getElementById("stopButton").style.display = "none";
+    }
+}
+// Función para leer el último mensaje de la IA
+function readText() {
+    if (lastAiMessage.trim() !== "") {
+        // Enviar una solicitud al backend para convertir el texto en audio
+        fetch(`http://localhost/ia2/Ia/backend/wikipedia.php?text_to_speech=${encodeURIComponent(lastAiMessage)}`)
+            .then(response => {
+                if (response.ok) {
+                    return response.blob(); // Obtener el archivo de audio como un blob
+                } else {
+                    throw new Error("Error al generar el audio.");
+                }
+            })
+            .then(blob => {
+                // Crear un objeto de audio y reproducirlo
+                const audioUrl = URL.createObjectURL(blob);
+                const audio = new Audio(audioUrl);
+                audio.play().catch(error => {
+                    console.error("Error al reproducir el audio:", error);
+                    alert("No se pudo reproducir el audio. Asegúrate de que el navegador permita la reproducción automática.");
+                });
+            })
+            .catch(error => {
+                console.error("Error:", error);
+                alert("No se pudo generar el audio.");
+            });
+    } else {
+        alert("No hay texto para leer.");
+    }
+}
+// Event listener para enviar el mensaje al presionar Enter
+document.getElementById("userInput").addEventListener("keypress", function (event) {
+    if (event.key === "Enter") {
+        event.preventDefault(); // Evitar el comportamiento por defecto (como enviar un formulario)
+        submitComment(); // Llamar a la función submitComment
+    }
+});
