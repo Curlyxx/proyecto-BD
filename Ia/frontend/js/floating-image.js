@@ -28,11 +28,11 @@ function showRandomTip() {
     // Seleccionar mensaje aleatorio que no sea el último mostrado
     let randomIndex;
     do {
-        randomIndex = Math.floor(Math.random() * tipsSeguridad.length);
-    } while (randomIndex === lastTipIndex && tipsSeguridad.length > 1);
+        randomIndex = Math.floor(Math.random() * tipsGenerales.length); // Cambiado a tipsGenerales
+    } while (randomIndex === lastTipIndex && tipsGenerales.length > 1); // Cambiado a tipsGenerales
     
     lastTipIndex = randomIndex;
-    const randomTip = tipsSeguridad[randomIndex];
+    const randomTip = tipsGenerales[randomIndex]; // Cambiado a tipsGenerales
     
     // Crear elemento de mensaje
     const tipElement = document.createElement('div');
@@ -42,8 +42,6 @@ function showRandomTip() {
     // Añadir al mini-chat
     miniChat.appendChild(tipElement);
     miniChat.classList.add('mini-visible');
-    
-    
 }
 
 // Interacción

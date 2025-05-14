@@ -142,14 +142,7 @@ button:hover {
     background-color: #3700b3;
 }
 
-/* Ajustes para el contenedor del chat */
-.chat-container {
-    flex: 1;
-    margin-bottom: 80px;
-    overflow-y: auto;
-    padding-bottom: 60px;
-    position: relative;
-}
+
 
 /* Estilo personalizado para la barra de desplazamiento */
 body::-webkit-scrollbar {
@@ -303,29 +296,44 @@ input:disabled {
     cursor: not-allowed; /* Cambiar el cursor */
 }
 
-/* Estilos adicionales para el chat */
+/* Modificar estos estilos en tu archivo CSS */
+
+/* Estilos adicionales para el chat - MODIFICAR ESTA SECCIÓN */
 #chat {
     display: none; /* Oculta el chat al inicio */
     flex-direction: column;
     gap: 10px;
     padding: 10px;
     overflow-y: auto;
-    height: 0; /* Altura inicial */
-    border: 1px solid #444;
-    border-radius: 8px;
-    background-color: #2d2d44;
+    min-height: 0; /* Altura mínima inicial */
+    max-height: none; /* Sin altura máxima - permite crecer indefinidamente */
+    border: none; /* Eliminamos el borde */
+    border-radius: 0; /* Eliminamos el border-radius */
+    background-color: transparent; /* Fondo transparente */
     opacity: 0; /* Inicialmente transparente */
     transform: scaleY(0); /* Escala inicial */
     transform-origin: top; /* La animación se expande desde arriba */
-    transition: all 30s ease-in-out; /* Transición suave */
+    transition: all 0.5s ease-in-out; /* Transición suave más rápida */
 }
 
 #chat.visible {
-    transition: all 5s ease-in-out; /* Transición suave */
     display: flex; /* Muestra el chat */
-    height: 400px; /* Altura final */
+    min-height: 100px; /* Altura mínima cuando es visible */
+    height: auto; /* Altura automática para adaptarse al contenido */
     opacity: 1; /* Opacidad final */
     transform: scaleY(1); /* Escala final */
+    transition: all 0.5s ease-in-out; /* Transición suave más rápida */
+}
+
+/* Ajustar contenedor del chat para que se expanda automáticamente */
+.chat-container {
+    flex: 1;
+    margin-bottom: 80px;
+    overflow-y: auto;
+    padding-bottom: 60px;
+    position: relative;
+    height: auto; /* Altura automática */
+    max-height: none; /* Sin altura máxima */
 }
 
 /* Ajustes para los mensajes del usuario y la IA */

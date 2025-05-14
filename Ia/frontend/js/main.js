@@ -8,12 +8,107 @@ let lastAudio = null; // Almacena el último audio generado
 let lastAiAudio = ""; // Almacena la versión resumida para audio
 let currentConversationId = null; // ID de la conversación actual
 
+// Función para desplazarse al fondo del chat
+// Función para desplazarse suavemente al fondo del chat
+function scrollToBottomSmooth() {
+    // Obtener el elemento del chat
+    const chat = document.getElementById("chat");
+    if (!chat) return;
+    
+    // Calcular la posición final (el fondo del chat)
+    const targetPosition = chat.scrollHeight;
+    
+    // Posición actual
+    const startPosition = chat.scrollTop;
+    
+    // Calcular la distancia para desplazar
+    const distance = targetPosition - startPosition;
+    
+    // Si no hay distancia para desplazar, salir
+    if (distance <= 0) return;
+    
+    // Configuración de la animación
+    const duration = 5000; // Duración de la animación en milisegundos
+    const steps = 40;    // Número de pasos en la animación
+    const stepTime = duration / steps; // Tiempo por paso
+    
+    // Método para suavizar la animación (easing)
+    function easeOutCubic(t) {
+        return 1 - Math.pow(1 - t, 3);
+    }
+    
+    let currentStep = 0;
+    
+    // Función que se ejecuta en cada paso de la animación
+    function step() {
+        currentStep++;
+        
+        // Calcular el progreso de la animación (0 a 1)
+        const progress = currentStep / steps;
+        
+        // Aplicar función de easing para suavizar el movimiento
+        const easedProgress = easeOutCubic(progress);
+        
+        // Calcular la nueva posición
+        const newPosition = startPosition + (distance * easedProgress);
+        
+        // Establecer la nueva posición de desplazamiento
+        chat.scrollTop = newPosition;
+        
+        // Si no hemos llegado al último paso, programar el siguiente
+        if (currentStep < steps) {
+            setTimeout(step, stepTime);
+        }
+    }
+    
+    // Iniciar la animación
+    step();
+    
+    // También desplazar la página completa si es necesario, con animación suave
+    window.scrollTo({
+        top: document.body.scrollHeight,
+        behavior: 'smooth'
+    });
+}
+
+// Reemplaza todas las llamadas a scrollToBottom con scrollToBottomSmooth
+// en tus funciones existentes
+
+// Ejemplo: Modificar la función typeMessage para usar desplazamiento suave
+function typeMessage(message, element, callback) {
+    let text = "";
+    let index = 0;
+    typingInterval = setInterval(() => {
+        if (index < message.length) {
+            text += message.charAt(index);
+            element.innerHTML = text; // Usar innerHTML para mantener el formato
+            index++;
+            
+            // Desplazar suavemente cada cierta cantidad de caracteres
+            // (menos frecuente para evitar animaciones superpuestas)
+            if (index % 30 === 0) {
+                scrollToBottomSmooth();
+            }
+        } else {
+            clearInterval(typingInterval);
+            isTyping = false;
+            scrollToBottomSmooth(); // Desplazar suavemente al finalizar
+            if (callback) callback(); // Llamar al callback si está definido
+        }
+    }, 30); // Velocidad de escritura (30ms por letra)
+}
+
+// También necesitarás actualizar otras funciones que llaman a scrollToBottom
+// para que usen scrollToBottomSmooth en su lugar
+
 // Función que se ejecuta al cargar la página
 document.addEventListener('DOMContentLoaded', function () {
     // Cargar el historial de conversaciones o crear uno nuevo
     initConversation();
+    // Llamar a scrollToBottom para asegurar que empieza en la parte inferior
+    scrollToBottomSmooth();
 
-    // Event listeners
+    // Event listenersFF
     document.getElementById("userInput").addEventListener("keypress", function (event) {
         if (event.key === "Enter") {
             event.preventDefault();
@@ -66,16 +161,16 @@ function cargarHistorialConversaciones() {
                 // Clasificar las conversaciones por período de tiempo
                 const hoy = new Date();
                 hoy.setHours(0, 0, 0, 0);
-                
+
                 const ayer = new Date(hoy);
                 ayer.setDate(ayer.getDate() - 1);
-                
+
                 const ultimos7Dias = new Date(hoy);
                 ultimos7Dias.setDate(ultimos7Dias.getDate() - 7);
-                
+
                 const ultimos30Dias = new Date(hoy);
                 ultimos30Dias.setDate(ultimos30Dias.getDate() - 30);
-                
+
                 // Agrupar conversaciones por período
                 const conversacionesPorPeriodo = {
                     hoy: [],
@@ -84,10 +179,10 @@ function cargarHistorialConversaciones() {
                     ultimos30Dias: [],
                     anteriores: []
                 };
-                
+
                 data.conversaciones.forEach(conv => {
                     const fechaConv = new Date(conv.fecha_creacion);
-                    
+
                     if (fechaConv >= hoy) {
                         conversacionesPorPeriodo.hoy.push(conv);
                     } else if (fechaConv >= ayer) {
@@ -100,7 +195,7 @@ function cargarHistorialConversaciones() {
                         conversacionesPorPeriodo.anteriores.push(conv);
                     }
                 });
-                
+
                 // Mostrar conversaciones agrupadas
                 const periodos = [
                     { id: 'hoy', nombre: 'Hoy' },
@@ -109,10 +204,10 @@ function cargarHistorialConversaciones() {
                     { id: 'ultimos30Dias', nombre: 'Últimos 30 días' },
                     { id: 'anteriores', nombre: 'Anteriores' }
                 ];
-                
+
                 periodos.forEach(periodo => {
                     const conversaciones = conversacionesPorPeriodo[periodo.id];
-                    
+
                     // Solo crear la sección si hay conversaciones en este período
                     if (conversaciones.length > 0) {
                         // Crear encabezado de sección
@@ -120,7 +215,7 @@ function cargarHistorialConversaciones() {
                         seccionHeader.classList.add('time-section-header');
                         seccionHeader.textContent = periodo.nombre;
                         chatHistory.appendChild(seccionHeader);
-                        
+
                         // Crear las conversaciones de esta sección
                         conversaciones.forEach(conv => {
                             const chatItem = crearElementoChat(conv);
@@ -152,7 +247,7 @@ function crearElementoChat(conv) {
     const chatItem = document.createElement('div');
     chatItem.classList.add('chat-item');
     chatItem.dataset.chatId = conv.id; // Guardar el ID en el dataset para referencia fácil
-    
+
     // Si es la conversación actual, marcarla como activa
     if (currentConversationId === conv.id) {
         chatItem.classList.add('active');
@@ -172,13 +267,13 @@ function crearElementoChat(conv) {
         <div class="chat-title">${titulo}</div>
         <div class="chat-date">${fechaFormateada}</div>
     `;
-    
+
     // Crear el botón de eliminar (derecha)
     const deleteButton = document.createElement('button');
     deleteButton.classList.add('delete-chat-btn');
     deleteButton.innerHTML = '🗑️';
     deleteButton.title = 'Eliminar conversación';
-    
+
     // Agregar el evento para eliminar
     deleteButton.addEventListener('click', (e) => {
         e.stopPropagation(); // Evitar que se active el chat al hacer clic en eliminar
@@ -212,50 +307,50 @@ function eliminarConversacion(conversacionId) {
         fetch(`http://localhost:5001/eliminar_conversacion/${conversacionId}`, {
             method: 'DELETE'
         })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Error HTTP: ${response.status}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            if (data.error) {
-                console.error('Error al eliminar la conversación:', data.error);
-                return;
-            }
-            
-            console.log('Conversación eliminada correctamente');
-            
-            // Si la conversación eliminada era la actual, limpiar el chat
-            if (currentConversationId === conversacionId) {
-                clearChat();
-                currentConversationId = null;
-                localStorage.removeItem('currentConversationId');
-                
-                // Mostrar mensaje indicando que el chat fue eliminado
-                const chat = document.getElementById("chat");
-                const messageDiv = document.createElement("div");
-                messageDiv.classList.add("message", "system-message");
-                messageDiv.textContent = "La conversación actual ha sido eliminada.";
-                chat.appendChild(messageDiv);
-            }
-            
-            // Recargar el historial de conversaciones
-            cargarHistorialConversaciones()
-                .then(success => {
-                    if (success && !currentConversationId && document.querySelector('.chat-item')) {
-                        // Si no hay conversación activa pero hay otras disponibles, cargamos la primera
-                        const primerChat = document.querySelector('.chat-item');
-                        primerChat.classList.add('active');
-                        const chatId = parseInt(primerChat.dataset.chatId);
-                        cargarMensajesConversacion(chatId);
-                    }
-                });
-        })
-        .catch(error => {
-            console.error('Error al eliminar la conversación:', error);
-            alert('Ocurrió un error al eliminar la conversación.');
-        });
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`Error HTTP: ${response.status}`);
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.error) {
+                    console.error('Error al eliminar la conversación:', data.error);
+                    return;
+                }
+
+                console.log('Conversación eliminada correctamente');
+
+                // Si la conversación eliminada era la actual, limpiar el chat
+                if (currentConversationId === conversacionId) {
+                    clearChat();
+                    currentConversationId = null;
+                    localStorage.removeItem('currentConversationId');
+
+                    // Mostrar mensaje indicando que el chat fue eliminado
+                    const chat = document.getElementById("chat");
+                    const messageDiv = document.createElement("div");
+                    messageDiv.classList.add("message", "system-message");
+                    messageDiv.textContent = "La conversación actual ha sido eliminada.";
+                    chat.appendChild(messageDiv);
+                }
+
+                // Recargar el historial de conversaciones
+                cargarHistorialConversaciones()
+                    .then(success => {
+                        if (success && !currentConversationId && document.querySelector('.chat-item')) {
+                            // Si no hay conversación activa pero hay otras disponibles, cargamos la primera
+                            const primerChat = document.querySelector('.chat-item');
+                            primerChat.classList.add('active');
+                            const chatId = parseInt(primerChat.dataset.chatId);
+                            cargarMensajesConversacion(chatId);
+                        }
+                    });
+            })
+            .catch(error => {
+                console.error('Error al eliminar la conversación:', error);
+                alert('Ocurrió un error al eliminar la conversación.');
+            });
     }
 }
 
@@ -360,22 +455,23 @@ function cargarMensajesConversacion(conversacionId) {
                 // Cargar el audio del último mensaje de IA si existe
                 if (ultimoMensajeAI && ultimoMensajeAI.ruta_audio) {
                     console.log("Cargando audio guardado:", ultimoMensajeAI.ruta_audio);
-                    
+
                     // Si hay un audio anterior, detenerlo
                     if (lastAudio) {
                         lastAudio.pause();
                         lastAudio.currentTime = 0;
                     }
-                    
+
                     // Crear un nuevo objeto de audio con la URL del archivo existente
                     lastAudio = new Audio(ultimoMensajeAI.ruta_audio);
-                    
+
                     // Agregar un parámetro de caché único para evitar problemas de caché
                     lastAudio.src = `${ultimoMensajeAI.ruta_audio}?t=${new Date().getTime()}`;
                 }
 
                 // Desplazar el chat hacia abajo
-                chat.scrollTop = chat.scrollHeight;
+                scrollToBottomSmooth();
+
             }
         })
         .catch(error => {
@@ -439,8 +535,6 @@ function clearChat() {
         lastAudio = null;
     }
 }
-
-// Función para animar la escritura de un mensaje
 function typeMessage(message, element, callback) {
     let text = "";
     let index = 0;
@@ -449,9 +543,16 @@ function typeMessage(message, element, callback) {
             text += message.charAt(index);
             element.innerHTML = text; // Usar innerHTML para mantener el formato
             index++;
+            
+            // Desplazar suavemente cada cierta cantidad de caracteres
+            // (menos frecuente para evitar animaciones superpuestas)
+            if (index % 30 === 0) {
+                scrollToBottomSmooth();
+            }
         } else {
             clearInterval(typingInterval);
             isTyping = false;
+            scrollToBottomSmooth(); // Desplazar suavemente al finalizar
             if (callback) callback(); // Llamar al callback si está definido
         }
     }, 30); // Velocidad de escritura (30ms por letra)
@@ -645,7 +746,8 @@ function submitComment() {
         input.value = "";
 
         // Desplazar el chat hacia abajo
-        chat.scrollTop = chat.scrollHeight;
+        scrollToBottomSmooth();
+
     }
 }
 
@@ -694,3 +796,5 @@ function stopTyping() {
         document.getElementById("stopButton").style.display = "none";
     }
 }
+
+
